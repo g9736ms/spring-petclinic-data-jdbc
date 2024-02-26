@@ -43,6 +43,17 @@ initContainers:
     - "-c"
     - "mkdir -p /logs && touch /logs/.keep"
 
+PersistentVolumeClaim:
+  enabled: false
+  mountPath: /logs
+  spec:
+    accessModes:
+      - ReadWriteOnce
+    storageClassName: YOUR_SC_NAME
+    resources:
+      requests:
+        storage: 10Gi
+
 extraVolumeMounts: |
   - name: logs
     mountPath: /logs
@@ -58,12 +69,34 @@ extraVolumes: |
 
 extraEnvFrom: {}
 
+externalSecret:
+  enabled: false
+  data: |
+    - secretKey: SERVER_PORT
+      remoteRef:
+        key: spring-petclinic-data-jdbc
+        property: SERVER_PORT
+    - secretKey: DB_ADR
+      remoteRef:
+        key: spring-petclinic-data-jdbc
+        property: DB_ADR
+    - secretKey: DB_IP
+      remoteRef:
+        key: spring-petclinic-data-jdbc
+        property: DB_IP
+    - secretKey: DB_PW
+      remoteRef:
+        key: spring-petclinic-data-jdbc
+        property: DB_PW
+
 env:
   SPRING_PROFILES_ACTIVE: main
-  JAVA_TOOL_OPTIONS: "-XX:InitialRAMPercentage=50 -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=80 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/logs"
-
-PersistentVolumeClaim:
-  enabled: false
+  JAVA_TOOL_OPTIONS: "-XX:InitialRAMPercentage=50 -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=80 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/logs -javaagent:/opt/monitoring/opentelemetry-javaagent.jar"
+  OTEL_EXPORTER: otlp
+  OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+  OTEL_EXPORTER_OTLP_ENDPOINT: https://USER_OTLP.URL
+  OTEL_EXPORTER_OTLP_INSECURE: true
+  OTEL_RESOURCE_ATTRIBUTES: service.name=spring-petclinic-data-jdbc,service.env=main
 
 securityContext: {}
   # capabilities:

@@ -1,0 +1,11 @@
+{{- if .Values.PersistentVolumeClaim.enabled -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "spring-petclinic-data-jdbc.fullname" . }}-pvc
+  namespace: {{ .Release.Namespace }}
+spec:
+  {{- with .Values.PersistentVolumeClaim.spec }}
+    {{- toYaml . | nindent 2 }}
+  {{- end }}
+{{- end -}}

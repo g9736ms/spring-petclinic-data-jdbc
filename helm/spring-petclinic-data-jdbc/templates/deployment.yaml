@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "spring-petclinic-data-jdbc.fullname" . }}
+  name: {{ include "spring-petclinic-data-jdbc.fullname" . }}-deployment
   labels:
     {{- include "spring-petclinic-data-jdbc.labels" . | nindent 4 }}
 spec:
@@ -87,7 +87,7 @@ spec:
             {{- tpl . $ | nindent 12 }}
               {{- end }}
               {{- if .Values.PersistentVolumeClaim.enabled }}
-              - name: {{ include "fasstoself-api.fullname" . }}-pvc
+              - name: {{ include "spring-petclinic-data-jdbc.fullname" . }}-pvc
                 mountPath: {{ .Values.PersistentVolumeClaim.mountPath }}
               {{- end }}
       {{- with .Values.nodeSelector }}
