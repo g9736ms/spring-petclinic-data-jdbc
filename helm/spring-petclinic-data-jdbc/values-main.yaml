@@ -34,14 +34,16 @@ podSecurityContext:
   fsGroup: 1000
   fsGroupChangePolicy: "OnRootMismatch"
 
-initContainers:
-  enabled: true
-  name: logs
-  image: busybox
-  command:
-    - "sh"
-    - "-c"
-    - "mkdir -p /logs && touch /logs/.keep"
+otel:
+  enabled: false
+  version: "v2.1.0"
+  env:
+    OTEL_EXPORTER: otlp
+    OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+    OTEL_EXPORTER_OTLP_ENDPOINT: https://USER_OTLP.URL
+    OTEL_EXPORTER_OTLP_INSECURE: true
+    OTEL_RESOURCE_ATTRIBUTES: service.name=spring-petclinic-data-jdbc,service.env=main
+
 
 PersistentVolumeClaim:
   enabled: false
@@ -92,11 +94,6 @@ externalSecret:
 env:
   SPRING_PROFILES_ACTIVE: main
   JAVA_TOOL_OPTIONS: "-XX:InitialRAMPercentage=50 -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=80 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/logs -javaagent:/opt/monitoring/opentelemetry-javaagent.jar"
-  OTEL_EXPORTER: otlp
-  OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
-  OTEL_EXPORTER_OTLP_ENDPOINT: https://USER_OTLP.URL
-  OTEL_EXPORTER_OTLP_INSECURE: true
-  OTEL_RESOURCE_ATTRIBUTES: service.name=spring-petclinic-data-jdbc,service.env=main
 
 securityContext: {}
   # capabilities:

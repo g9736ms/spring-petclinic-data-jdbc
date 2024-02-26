@@ -27,15 +27,19 @@ spec:
       serviceAccountName: {{ include "spring-petclinic-data-jdbc.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      {{- if .Values.initContainers.enabled }}
       initContainers:
-        - name: {{ .Values.initContainers.name }}
-          image: {{ .Values.initContainers.image }}
-          command: {{ .Values.initContainers.command }}
+      {{- if .Values.otel.enabled }}
+        - name: otel-install
+          image: curlimages/curl
           {{- with .Values.extraVolumeMounts }}
           volumeMounts:
             {{- tpl . $ | nindent 12 }}
-          {{- end }}
+            {{- end }}
+          args:
+            - "-L"
+            - "https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/{{ .Values.otel.version }}/opentelemetry-javaagent.jar"
+            - "-o"
+            - "/opt/monitoring/opentelemetry-javaagent.jar"
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
@@ -74,6 +78,9 @@ spec:
           {{- if .Values.env }}
           env:
           {{- range $key, $value := .Values.env }}
+          {{- if .Values.otel.enabled }}
+          {{- range $key, $value := .Values.otel.env }}
+          {{- end }}
           - name: "{{ tpl $key $ }}"
             value: "{{ tpl (print $value) $ }}"
           {{- end }}
