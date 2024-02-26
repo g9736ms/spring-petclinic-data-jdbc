@@ -16,6 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      #TODO 필요할 일 경우 tag 값이나 release 버전 가져오기
       - name: Get sha_short
         id: vars
         run: |
@@ -36,7 +37,7 @@ jobs:
         with:
           version: 'latest'
           java-version: '17'
-          components: 'espresso'
+          components: 'ㅊ'
           cache: 'gradle'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -49,6 +50,21 @@ jobs:
       #  env:
       #    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       #    SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: Run tests with coverage
+        run: ./app/spring-petclinic-data-jdbc/gradlew clean test jacocoTestReport
+
+      # TODO jacocoTestReport 파일 업로드 구현
+      #- name: Upload coverage to Something
+      #  env:
+      #    file: ./app/spring-petclinic-data-jdbc/build/reports/tests/test/index.html
+
+      # TODO Send jacocoTestReport Success messages
+      #- name: Upload coverage to Something
+      #  env:
+      #    token: ${{ secrets.MESSAGE_TOKEN }}
+      #    jacocoURl:
+      #  run: |
 
       - name: Grant execute permission for gradlew
         run: chmod +x app/${{ env.APP_NAME }}/gradlew
@@ -63,6 +79,7 @@ jobs:
             -Djib.to.auth.username="${{ secrets.DOCKER_HUB_ID }}" \
             -Djib.to.auth.password="${{ secrets.DOCKER_HUB_PW }}"
 
+      #TODO production 환경일 시 helm chart에 appVerion 변경 추가
       - name: Update Tag in values.yaml
         if: startsWith(github.ref, 'refs/heads/main')
         env:
@@ -111,3 +128,9 @@ jobs:
           KIND: Deployment
         run: |
           argocd app sync argo/${{ env.APP_NAME }} --resource argoproj.io:$KIND:${{ env.APP_NAME }}-deployment --grpc-web
+
+      # TODO Send ArgoCd Success messages
+      #- name: ArgoCd INFO messages
+      #  env:
+      #    URL: ${{secrets.ARGO_ADDR}}
+      #  run: |
