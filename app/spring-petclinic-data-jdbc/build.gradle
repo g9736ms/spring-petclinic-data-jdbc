@@ -1,8 +1,20 @@
 plugins {
     id 'java'
+    id 'jacoco'
     id 'org.springframework.boot' version '3.0.5'
     id 'com.google.cloud.tools.jib' version '3.3.1'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+}
+
+group = 'org.springframework.samples'
+sourceCompatibility = '17'
+
+ext {
+    webjarsBootstrapVersion = '3.3.6'
+    webjarsJqueryUiVersion = '1.11.4'
+    webjarsJqueryVersion = '2.2.4'
+
+    jacocoVersion = '0.8.11'
 }
 
 
@@ -29,10 +41,21 @@ jib {
     }
 }
 
+jacoco {
+    toolVersion = jacocoVersion
+}
 
-group = 'org.springframework.samples'
-version = '3.0.0.BUILD-SNAPSHOT'
-sourceCompatibility = '17'
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+test {
+    finalizedBy 'jacocoTestReport'
+}
 
 repositories {
     mavenCentral()
@@ -41,6 +64,7 @@ repositories {
 }
 
 dependencies {
+
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
@@ -55,13 +79,7 @@ dependencies {
     implementation 'org.flywaydb:flyway-mysql'
     implementation 'com.github.ben-manes.caffeine:caffeine'
 
-    implementation "org.webjars:jquery:2.2.4"
-    implementation "org.webjars:jquery-ui:1.11.4"
-    implementation "org.webjars:bootstrap:3.3.6"
-}
-
-ext {
-    webjarsBootstrapVersion = '3.3.6'
-    webjarsJqueryUiVersion = '1.11.4'
-    webjarsJqueryVersion = '2.2.4'
+    implementation "org.webjars:jquery:${webjarsJqueryVersion}"
+    implementation "org.webjars:jquery-ui:${webjarsJqueryUiVersion}"
+    implementation "org.webjars:bootstrap:${webjarsBootstrapVersion}"
 }

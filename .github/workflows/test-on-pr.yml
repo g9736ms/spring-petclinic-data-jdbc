@@ -11,3 +11,33 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            !~/.gradle/caches/journal-1
+            !~/.gradle/caches/journal-1.lock
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          version: 'latest'
+          java-version: '17'
+          components: 'espresso'
+          cache: 'gradle'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run tests with coverage
+        run: ./app/spring-petclinic-data-jdbc/gradlew test jacocoTestReport
+
+      # TODO jacocoTestReport 파일 업로드 구현
+      #- name: Upload coverage to Something
+      #  env:
+      #    file: ./app/spring-petclinic-data-jdbc/build/reports/jacoco/test/jacocoTestReport.xml
+
+      - name: Build test
+        run: ./gradlew build
