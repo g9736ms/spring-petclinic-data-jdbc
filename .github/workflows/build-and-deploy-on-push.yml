@@ -1,0 +1,108 @@
+name: 'Build & Push image'
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'app/spring-petclinic-data-jdbc/**'
+env:
+  PROJECT_NAME: "KAKAO"
+  APP_NAME: "spring-petclinic-data-jdbc"
+
+jobs:
+  build-push:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Get sha_short
+        id: vars
+        run: |
+          echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            !~/.gradle/caches/journal-1
+            !~/.gradle/caches/journal-1.lock
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          version: 'latest'
+          java-version: '17'
+          components: 'espresso'
+          cache: 'gradle'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v1.5
+        with:
+          projectBaseDir: app/${{ env.APP_NAME }}
+          sonarHost: ${{ secrets.SONAR_HOST }}
+          sonarToken: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x app/${{ env.APP_NAME }}/gradlew
+
+      - name: Build with Gradle and Push Image
+        env:
+          SHA_TAG: ${{ steps.vars.outputs.sha_short }}
+        run: |
+          cd app/${{ env.APP_NAME }}
+          ./gradlew jib -Djib.to.image="${{ secrets.DOCKER_HUB_REPO }}/${{ env.APP_NAME }}" \
+            -Djib.to.tags="latest,$SHA_TAG" \
+            -Djib.to.auth.username="${{ secrets.DOCKER_HUB_ID }}" \
+            -Djib.to.auth.password="${{ secrets.DOCKER_HUB_PW }}"
+
+      - name: Update Tag in values.yaml
+        if: startsWith(github.ref, 'refs/heads/main')
+        env:
+          SHA_TAG: ${{ steps.vars.outputs.sha_short }}
+          BUILD_ENV: "main"
+        run: |
+          git config user.email "g9736ms@gmail.com"
+          git config user.name "Github Action"
+          git checkout -b ${{ env.APP_NAME }}
+          
+          values_file="/helm/${{ env.APP_NAME }}/values-$BUILD_ENV.yaml"
+          sed -i "s/tag:.*/tag: \"$SHA_TAG\"/" "$values_file"
+          
+          git add "$values_file"
+          git commit -m "[${{ env.APP_NAME }}] Update tag in values-$BUILD_ENV.yaml to $SHA_TAG"
+
+      - name: Push Changes
+        run: |
+          git push origin ${{ env.APP_NAME }}:main
+          git checkout main
+          git branch -D ${{ env.APP_NAME }}
+
+  deploy-argocd:
+    runs-on: ubuntu-20.04
+    needs:
+      - build-push
+    steps:
+      - name: Download ArgoCd CLI
+        env:
+          VERSION: "latest"
+        run: |
+          curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/$VERSION/download/argocd-linux-amd64 && chmod +x /usr/local/bin/argocd
+
+      - name: ArgoCd Login
+        run: |
+          argocd login ${{secrets.ARGO_ADDR}} --grpc-web --username=${{ secrets.ARGO_USERNAME }} --password=${{ secrets.ARGO_PASSWORD }}
+
+      - name: ArgoCd Deploy
+        if: startsWith(github.ref, 'refs/heads/main')
+        env:
+          KIND: Deployment
+        run: |
+          argocd app sync argo/${{ env.APP_NAME }} --resource argoproj.io:$KIND:${{ env.APP_NAME }}-deployment --grpc-web

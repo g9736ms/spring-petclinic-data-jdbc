@@ -1,0 +1,159 @@
+# Default values for spring-petclinic-data-jdbc.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+
+image:
+  repository: g9736ms/test
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  runAsUser: 1000
+  fsGroup: 1000
+  fsGroupChangePolicy: "OnRootMismatch"
+
+initContainers:
+  enabled: true
+  name: logs
+  image: busybox
+  command:
+    - "sh"
+    - "-c"
+    - "mkdir -p /logs && touch /logs/.keep"
+
+extraVolumeMounts: |
+  - name: logs
+    mountPath: /logs
+  - name: timezone-config
+    mountPath: /etc/localtime
+
+extraVolumes: |
+  - name: logs
+    emptyDir: {}
+  - name: timezone-config
+    hostPath:
+      path: /usr/share/zoneinfo/Asia/Seoul
+
+extraEnvFrom: {}
+
+env:
+  SPRING_PROFILES_ACTIVE: main
+  JAVA_TOOL_OPTIONS: "-XX:InitialRAMPercentage=50 -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=80 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/logs"
+
+PersistentVolumeClaim:
+  enabled: false
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+  ports:
+    - protocol: TCP
+      port: 80
+      name: http
+      targetPort: 8080
+
+livenessProbe:
+  httpGet:
+    path: "/actuator/health"
+    port: http
+  initialDelaySeconds: 150
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: "/actuator/health"
+    port: http
+  initialDelaySeconds: 150
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+
+ingress:
+  enabled: ture
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.org/proxy-connect-timeout: "30s"
+    nginx.org/proxy-read-timeout: "20s"
+    nginx.org/client-max-body-size: "4m"
+  hosts:
+    - host: hostname.mydomain.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - hosts:
+        - hostname.mydomain.com
+      secretName: mydomain-tls
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources:
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  limits:
+    cpu: 500m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 90
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: spring-petclinic-data-jdbc
+          topologyKey: "kubernetes.io/hostname"

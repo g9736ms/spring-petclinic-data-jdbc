@@ -1,0 +1,7 @@
+# 빌드 관련 파일들
+/app/**/.gradle/
+/app/**/build/
+
+#
+.idea
+
