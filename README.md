@@ -7,13 +7,33 @@
 ```
 
 ### Jib 이용 방법 
-gradlew jib 를 이용하여 이미지 build + push 까지 이뤄집니다.
 ![alt text](https://www.publickey1.jp/2018/jib02.gif)
+하기 명령어를 이용하여 이미지 build + push 까지 이뤄집니다.
+* 대략 116.84 MB
 ```shell
+cd app/spring-petclinic-data-jdbc
 ./gradlew jib -Djib.to.image="your/repo" \
-  -Djib.to.tags="latest"
+  -Djib.to.tags="local"
   -Djib.to.auth.username="$YOUR_REPO_ID" \
   -Djib.to.auth.password="$YOUR_REPO_PW"
+```
+
+### LOCAL TEST 실행 방법
+실행
+```shell
+cd app/spring-petclinic-data-jdbc
+docker-compose up &
+./gradlew bootJar 
+java -Dspring.profiles.active=local -jar build/libs/spring-petclinic-data-jdbc.jar
+```
+Docker Compose 설치 방법
+```shell
+#MAC
+Docker Desktop 다운로드: Docker 공식 웹사이트(https://www.docker.com/products/docker-desktop)
+#Linux
+sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+docker-compose --version
 ```
 
 ### Helm chart 적용 방법

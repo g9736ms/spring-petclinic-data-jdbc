@@ -2,6 +2,8 @@
 /app/**/.gradle/
 /app/**/build/
 
+*.jar
+
 #
 .idea
 
