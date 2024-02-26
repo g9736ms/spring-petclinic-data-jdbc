@@ -56,7 +56,21 @@ jacocoTestReport {
 
 test {
     finalizedBy 'jacocoTestReport'
+    testLogging.exceptionFormat = 'full'
+    // 테스트 케이스를 넣으세요
 }
+
+//최소 커버리지 설정
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.8
+            }
+        }
+    }
+}
+
 
 repositories {
     mavenCentral()

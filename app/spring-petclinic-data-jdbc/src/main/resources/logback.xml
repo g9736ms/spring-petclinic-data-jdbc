@@ -26,4 +26,9 @@
         </root>
     </springProfile>
 
+    <springProfile name="local">
+        <root level="info">
+            <appender-ref ref="Console" />
+        </root>
+    </springProfile>
 </configuration>
