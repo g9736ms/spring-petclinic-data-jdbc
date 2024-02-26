@@ -57,13 +57,13 @@ PersistentVolumeClaim:
         storage: 10Gi
 
 extraVolumeMounts: |
-  - name: logs
-    mountPath: /logs
+  - name: otel-volume
+    mountPath: /opt/monitoring
   - name: timezone-config
     mountPath: /etc/localtime
 
 extraVolumes: |
-  - name: logs
+  - name: otel-volume
     emptyDir: {}
   - name: timezone-config
     hostPath:

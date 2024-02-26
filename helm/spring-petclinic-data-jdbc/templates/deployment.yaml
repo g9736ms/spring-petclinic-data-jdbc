@@ -75,15 +75,18 @@ spec:
             {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- if .Values.env }}
           env:
-          {{- range $key, $value := .Values.env }}
+          {{- if .Values.env }}
+            {{- range $key, $value := .Values.env }}
+            - name: "{{ tpl $key $ }}"
+              value: "{{ tpl $value $ }}"
+            {{- end }}
+          {{- end }}
           {{- if .Values.otel.enabled }}
-          {{- range $key, $value := .Values.otel.env }}
-          {{- end }}
-          - name: "{{ tpl $key $ }}"
-            value: "{{ tpl (print $value) $ }}"
-          {{- end }}
+            {{- range $key, $value := .Values.otel.env }}
+            - name: "{{ tpl $key $ }}"
+              value: "{{ tpl $value $ }}"
+            {{- end }}
           {{- end }}
           {{- with .Values.extraEnvFrom }}
           envFrom:
@@ -94,7 +97,7 @@ spec:
             {{- tpl . $ | nindent 12 }}
               {{- end }}
               {{- if .Values.PersistentVolumeClaim.enabled }}
-              - name: {{ include "spring-petclinic-data-jdbc.fullname" . }}-pvc
+              - name: {{ include "spring-petclinic-data-jdbc.fullname" . }}-volume
                 mountPath: {{ .Values.PersistentVolumeClaim.mountPath }}
               {{- end }}
       {{- with .Values.nodeSelector }}
@@ -109,7 +112,12 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.extraVolumes }}
       volumes:
+      {{- with .Values.extraVolumes }}
         {{- tpl . $ | nindent 8 }}
+      {{- end }}
+      {{- if .Values.PersistentVolumeClaim.enabled }}
+        - name: {{ include "spring-petclinic-data-jdbc.fullname" . }}-volume
+          persistentVolumeClaim:
+            claimName: {{ include "spring-petclinic-data-jdbc.fullname" . }}-pvc
       {{- end }}
