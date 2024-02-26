@@ -55,9 +55,12 @@ jacocoTestReport {
 }
 
 test {
+    useJUnitPlatform()
     finalizedBy 'jacocoTestReport'
-    testLogging.exceptionFormat = 'full'
-    // 테스트 케이스를 넣으세요
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+    // 특정 테스트만 실행하고 싶다면 includePatterns를 사용
 }
 
 //최소 커버리지 설정
