@@ -19,13 +19,16 @@ cd app/spring-petclinic-data-jdbc
 ```
 
 ### LOCAL TEST 실행 방법
-실행
+로컬 실행
 ```shell
 cd app/spring-petclinic-data-jdbc
-docker-compose up &
 ./gradlew bootJar 
 java -Dspring.profiles.active=local -jar build/libs/spring-petclinic-data-jdbc.jar
 ```
+
+### Docker Compose 실행
+- Docker Compose에 DB와 어플리케이션이 같이 올라오게 만들어 뒀습니다.
+
 Docker Compose 설치 방법
 ```shell
 #MAC
@@ -34,6 +37,10 @@ Docker Desktop 다운로드: Docker 공식 웹사이트(https://www.docker.com/p
 sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 docker-compose --version
+```
+Docker Compose 실행
+```shell
+docker-compose up
 ```
 
 ### Helm chart 적용 방법

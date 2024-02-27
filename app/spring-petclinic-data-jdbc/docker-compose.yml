@@ -12,10 +12,8 @@ services:
       - "./conf.d:/etc/mysql/conf.d:ro"
 
   app:
-    image: g9736ms/test:latest
+    image: g9736ms/test:test
     ports:
       - "8080:8080"
-    environment:
-      - SPRING_PROFILES_ACTIVE=main
     depends_on:
       - mysql
